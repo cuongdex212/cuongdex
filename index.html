@@ -1,322 +1,56 @@
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trợ lý AI - Cường DEX</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f9;
-            color: #1a1a1a;
-            text-align: center;
-            padding: 15px;
-            position: relative;
-            min-height: 100vh;
-            margin: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: flex-start;
-            overflow: hidden;
-        }
+async function sendToAIWithRetry(imageBase64, retriesLeft) {
+    const resultDiv = document.getElementById('result');
+    const API_KEY = localStorage.getItem('cuongdex_apikey'); 
 
-        /* Chữ nền Cường DEX màu đen và đang chạy */
-        .scrolling-background {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: -1;
-            display: flex;
-            align-items: center;
-            overflow: hidden;
-            pointer-events: none;
-        }
-
-        .scrolling-text {
-            font-size: 100px;
-            font-weight: bold;
-            color: rgba(0, 0, 0, 0.12);
-            white-space: nowrap;
-            display: flex;
-            animation: textLoop 15s linear infinite;
-        }
-
-        .scrolling-text span {
-            padding-right: 100px;
-        }
-
-        @keyframes textLoop {
-            0% { transform: translateX(0%); }
-            100% { transform: translateX(-50%); }
-        }
-
-        /* Khung nhập API Key */
-        #loginScreen {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.85);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-        }
-
-        .login-box {
-            background: white;
-            padding: 25px;
-            border-radius: 8px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-            text-align: center;
-            width: 320px;
-        }
-
-        .login-box label {
-            display: block;
-            text-align: left;
-            font-size: 14px;
-            font-weight: bold;
-            margin-bottom: 5px;
-            color: #333;
-        }
-
-        .login-box input {
-            padding: 10px;
-            font-size: 14px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            margin-bottom: 15px;
-            width: 100%;
-            box-sizing: border-box;
-            text-align: center;
-        }
-
-        .login-box button {
-            background-color: #2563eb;
-            color: white;
-            padding: 10px 20px;
-            font-size: 16px;
-            font-weight: bold;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            width: 100%;
-        }
-
-        .login-box button:hover {
-            background-color: #1d4ed8;
-        }
-
-        #errorMsg {
-            color: red;
-            font-size: 14px;
-            margin-top: 10px;
-        }
-
-        /* Giao diện chính */
-        #mainContent {
-            display: none; 
-            flex-direction: column;
-            align-items: center;
-            width: 100%;
-        }
-
-        #captureBtn {
-            background-color: #2563eb;
-            color: white;
-            padding: 12px 20px;
-            font-size: 16px;
-            font-weight: bold;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
-            margin-top: 20px;
-            position: relative;
-            z-index: 10;
-        }
-        #captureBtn:hover {
-            background-color: #1d4ed8;
-        }
-        #result {
-            margin-top: 15px;
-            padding: 12px;
-            background: #ffffff;
-            border-radius: 6px;
-            display: inline-block;
-            max-width: 400px;
-            text-align: left;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            white-space: pre-wrap;
-            font-size: 15px;
-            font-weight: bold;
-            color: #1a1a1a;
-            position: relative;
-            z-index: 10;
-        }
-    </style>
-</head>
-<body>
-
-    <!-- Chữ nền màu đen chạy đằng sau -->
-    <div class="scrolling-background">
-        <div class="scrolling-text">
-            <span>Cường DEX</span>
-            <span>Cường DEX</span>
-        </div>
-    </div>
-
-    <!-- Màn hình nhập API Key -->
-    <div id="loginScreen">
-        <div class="login-box">
-            <h3>🔑 CƯỜNG DEX AI</h3>
-            <label>Nhập Google Gemini API Key / Token:</label>
-            <input type="text" id="apiKeyInput" placeholder="Nhập Key hoặc Token..." autofocus>
-            <button onclick="checkApiKey()">Vào ứng dụng</button>
-            <div id="errorMsg"></div>
-        </div>
-    </div>
-
-    <!-- Giao diện chính sau khi nhập Key -->
-    <div id="mainContent">
-        <button id="captureBtn">📸 CHỤP & LẤY ĐÁP ÁN</button>
-        <br>
-        <div id="result">Sẵn sàng...</div>
-    </div>
-
-    <script>
-        function checkApiKey() {
-            const apiKey = document.getElementById('apiKeyInput').value.trim();
-            const errorMsg = document.getElementById('errorMsg');
-            
-            if (!apiKey) {
-                errorMsg.innerText = "Vui lòng nhập API Key hoặc Token!";
-                return;
-            }
-
-            localStorage.setItem('cuongdex_apikey', apiKey);
-
-            document.getElementById('loginScreen').style.display = 'none';
-            document.getElementById('mainContent').style.display = 'flex';
-        }
-
-        window.onload = function() {
-            const savedKey = localStorage.getItem('cuongdex_apikey');
-            if (savedKey) {
-                document.getElementById('apiKeyInput').value = savedKey;
-                document.getElementById('loginScreen').style.display = 'none';
-                document.getElementById('mainContent').style.display = 'flex';
-            }
-        }
-
-        document.getElementById('apiKeyInput').addEventListener('keypress', function (e) {
-            if (e.key === 'Enter') {
-                checkApiKey();
-            }
-        });
-
-        document.getElementById('captureBtn').addEventListener('click', async () => {
-            const resultDiv = document.getElementById('result');
-            resultDiv.innerText = "⚡ Đang xử lý...";
-
-            try {
-                const stream = await navigator.mediaDevices.getDisplayMedia({ 
-                    video: { mediaSource: 'screen' } 
-                });
-                
-                const video = document.createElement('video');
-                video.srcObject = stream;
-                await video.play();
-
-                const MAX_WIDTH = 400;
-                let width = video.videoWidth;
-                let height = video.videoHeight;
-
-                if (width > MAX_WIDTH) {
-                    height = Math.round((height * MAX_WIDTH) / width);
-                    width = MAX_WIDTH;
-                }
-
-                const canvas = document.createElement('canvas');
-                canvas.width = width;
-                canvas.height = height;
-                const ctx = canvas.getContext('2d');
-                ctx.drawImage(video, 0, 0, width, height);
-                
-                stream.getTracks().forEach(track => track.stop());
-
-                const base64Image = canvas.toDataURL('image/jpeg', 0.35);
-
-                await sendToAIWithRetry(base64Image, 5);
-
-            } catch (error) {
-                console.error("Lỗi:", error);
-                resultDiv.innerText = "Lỗi: " + error.message;
-            }
-        });
-
-        async function sendToAIWithRetry(imageBase64, retriesLeft) {
-            const resultDiv = document.getElementById('result');
-            const API_KEY = localStorage.getItem('cuongdex_apikey'); 
-
-            try {
-                // Đã cập nhật sang model mới nhất: gemini-3.8-flash
-                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${API_KEY}`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        contents: [{
-                            parts: [
-                                { text: "Chỉ ghi đáp án: A, B, C hoặc D kèm 1 chữ." },
-                                {
-                                    inline_data: {
-                                        mime_type: "image/jpeg",
-                                        data: imageBase64.split(',')[1]
-                                    }
-                                }
-                            ]
-                        }],
-                        generationConfig: {
-                            maxOutputTokens: 20,
-                            temperature: 0.0
+    try {
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${API_KEY}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                contents: [{
+                    parts: [
+                        { text: "Chỉ ghi đáp án: A, B, C hoặc D kèm 1 chữ." },
+                        {
+                            inline_data: {
+                                mime_type: "image/jpeg",
+                                data: imageBase64.split(',')[1]
+                            }
                         }
-                    })
-                });
-
-                const data = await response.json();
-                
-                if ((response.status === 503 || (data.error && (data.error.code === 503 || data.error.message.includes("high demand")))) && retriesLeft > 0) {
-                    resultDiv.innerText = `🔄 Server bận, đang tự động thử lại (${retriesLeft})...`;
-                    await new Promise(resolve => setTimeout(resolve, 1500));
-                    return sendToAIWithRetry(imageBase64, retriesLeft - 1);
+                    ]
+                }],
+                generationConfig: {
+                    maxOutputTokens: 20,
+                    temperature: 0.0
                 }
+            })
+        });
 
-                if (data.candidates && data.candidates[0].content && data.candidates[0].content.parts[0].text) {
-                    const aiAnswer = data.candidates[0].content.parts[0].text;
-                    resultDiv.innerText = "👉 " + aiAnswer;
-                } else if (data.error) {
-                    resultDiv.innerText = "Lỗi API: " + data.error.message;
-                } else {
-                    resultDiv.innerText = "Không nhận được phản hồi. Thử lại!";
-                }
-
-            } catch (err) {
-                if (retriesLeft > 0) {
-                    resultDiv.innerText = `🔄 Đang kết nối lại (${retriesLeft})...`;
-                    await new Promise(resolve => setTimeout(resolve, 1500));
-                    return sendToAIWithRetry(imageBase64, retriesLeft - 1);
-                }
-                resultDiv.innerText = "Lỗi kết nối: " + err.message;
-            }
+        const data = await response.json();
+        
+        // Tự động xử lý nếu dính lỗi Server bận (503) hoặc Vượt quá giới hạn (429 / Quota exceeded)
+        if ((response.status === 503 || response.status === 429 || (data.error && (data.error.code === 503 || data.error.code === 429 || data.error.message.includes("quota") || data.error.message.includes("high demand")))) && retriesLeft > 0) {
+            resultDiv.innerText = `⏳ Đang đợi API hết hạn ngạch, thử lại sau 4s (${retriesLeft})...`;
+            await new Promise(resolve => setTimeout(resolve, 4000)); // Chờ 4 giây trước khi thử lại
+            return sendToAIWithRetry(imageBase64, retriesLeft - 1);
         }
-    </script>
-</body>
-</html>
+
+        if (data.candidates && data.candidates[0].content && data.candidates[0].content.parts[0].text) {
+            const aiAnswer = data.candidates[0].content.parts[0].text;
+            resultDiv.innerText = "👉 " + aiAnswer;
+        } else if (data.error) {
+            resultDiv.innerText = "Lỗi API: " + data.error.message;
+        } else {
+            resultDiv.innerText = "Không nhận được phản hồi. Thử lại!";
+        }
+
+    } catch (err) {
+        if (retriesLeft > 0) {
+            resultDiv.innerText = `🔄 Đang kết nối lại (${retriesLeft})...`;
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            return sendToAIWithRetry(imageBase64, retriesLeft - 1);
+        }
+        resultDiv.innerText = "Lỗi kết nối: " + err.message;
+    }
+}
