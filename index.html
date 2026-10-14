@@ -176,14 +176,14 @@
     <div id="loginScreen">
         <div class="login-box">
             <h3>🔑 CƯỜNG DEX AI</h3>
-            <label>Nhập Google Gemini API Key:</label>
-            <input type="text" id="apiKeyInput" placeholder="Nhập AIzaSy..." autofocus>
+            <label>Nhập Google Gemini API Key / Token:</label>
+            <input type="text" id="apiKeyInput" placeholder="Nhập Key hoặc Token..." autofocus>
             <button onclick="checkApiKey()">Vào ứng dụng</button>
             <div id="errorMsg"></div>
         </div>
     </div>
 
-    <!-- Giao diện chính sau khi nhập Key đúng -->
+    <!-- Giao diện chính sau khi nhập Key -->
     <div id="mainContent">
         <button id="captureBtn">📸 CHỤP & LẤY ĐÁP ÁN</button>
         <br>
@@ -195,22 +195,22 @@
             const apiKey = document.getElementById('apiKeyInput').value.trim();
             const errorMsg = document.getElementById('errorMsg');
             
-            if (!apiKey.startsWith("AIzaSy")) {
-                errorMsg.innerText = "API Key không hợp lệ (phải bắt đầu bằng AIzaSy).";
+            if (!apiKey) {
+                errorMsg.innerText = "Vui lòng nhập API Key hoặc Token!";
                 return;
             }
 
-            // Lưu API Key vào localStorage để các lần sau tự động đăng nhập
+            // Lưu Key/Token vào localStorage
             localStorage.setItem('cuongdex_apikey', apiKey);
 
             document.getElementById('loginScreen').style.display = 'none';
             document.getElementById('mainContent').style.display = 'flex';
         }
 
-        // Tự động vào luôn nếu đã từng lưu Key trước đó
+        // Tự động mở ứng dụng nếu đã lưu trước đó
         window.onload = function() {
             const savedKey = localStorage.getItem('cuongdex_apikey');
-            if (savedKey && savedKey.startsWith("AIzaSy")) {
+            if (savedKey) {
                 document.getElementById('apiKeyInput').value = savedKey;
                 document.getElementById('loginScreen').style.display = 'none';
                 document.getElementById('mainContent').style.display = 'flex';
@@ -312,7 +312,7 @@
             } catch (err) {
                 if (retriesLeft > 0) {
                     resultDiv.innerText = `🔄 Đang kết nối lại (${retriesLeft})...`;
-                    await new Number(resolve => setTimeout(resolve, 1500));
+                    await new Promise(resolve => setTimeout(resolve, 1500));
                     return sendToAIWithRetry(imageBase64, retriesLeft - 1);
                 }
                 resultDiv.innerText = "Lỗi kết nối: " + err.message;
