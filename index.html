@@ -53,7 +53,7 @@
             100% { transform: translateX(-50%); }
         }
 
-        /* Khung đăng nhập mật khẩu */
+        /* Khung nhập API Key */
         #loginScreen {
             position: fixed;
             top: 0;
@@ -74,15 +74,26 @@
             border-radius: 8px;
             box-shadow: 0 4px 10px rgba(0,0,0,0.3);
             text-align: center;
+            width: 320px;
+        }
+
+        .login-box label {
+            display: block;
+            text-align: left;
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #333;
         }
 
         .login-box input {
             padding: 10px;
-            font-size: 16px;
+            font-size: 14px;
             border: 1px solid #ccc;
             border-radius: 4px;
-            margin-bottom: 10px;
-            width: 200px;
+            margin-bottom: 15px;
+            width: 100%;
+            box-sizing: border-box;
             text-align: center;
         }
 
@@ -95,6 +106,7 @@
             border: none;
             border-radius: 4px;
             cursor: pointer;
+            width: 100%;
         }
 
         .login-box button:hover {
@@ -104,7 +116,7 @@
         #errorMsg {
             color: red;
             font-size: 14px;
-            margin-top: 5px;
+            margin-top: 10px;
         }
 
         /* Giao diện chính */
@@ -160,18 +172,18 @@
         </div>
     </div>
 
-    <!-- Màn hình nhập mật khẩu -->
+    <!-- Màn hình nhập API Key -->
     <div id="loginScreen">
         <div class="login-box">
-            <h3>🔒 NHẬP KEY</h3>
-            <input type="password" id="passwordInput" placeholder="Nhập mật khẩu..." autofocus>
-            <br>
-            <button onclick="checkPassword()">Xác nhận</button>
+            <h3>🔑 CƯỜNG DEX AI</h3>
+            <label>Nhập Google Gemini API Key:</label>
+            <input type="text" id="apiKeyInput" placeholder="Nhập AIzaSy..." autofocus>
+            <button onclick="checkApiKey()">Vào ứng dụng</button>
             <div id="errorMsg"></div>
         </div>
     </div>
 
-    <!-- Giao diện chính sau khi đăng nhập đúng -->
+    <!-- Giao diện chính sau khi nhập Key đúng -->
     <div id="mainContent">
         <button id="captureBtn">📸 CHỤP & LẤY ĐÁP ÁN</button>
         <br>
@@ -179,21 +191,35 @@
     </div>
 
     <script>
-        function checkPassword() {
-            const pass = document.getElementById('passwordInput').value;
+        function checkApiKey() {
+            const apiKey = document.getElementById('apiKeyInput').value.trim();
             const errorMsg = document.getElementById('errorMsg');
             
-            if (pass === "0000") {
+            if (!apiKey.startsWith("AIzaSy")) {
+                errorMsg.innerText = "API Key không hợp lệ (phải bắt đầu bằng AIzaSy).";
+                return;
+            }
+
+            // Lưu API Key vào localStorage để các lần sau tự động đăng nhập
+            localStorage.setItem('cuongdex_apikey', apiKey);
+
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('mainContent').style.display = 'flex';
+        }
+
+        // Tự động vào luôn nếu đã từng lưu Key trước đó
+        window.onload = function() {
+            const savedKey = localStorage.getItem('cuongdex_apikey');
+            if (savedKey && savedKey.startsWith("AIzaSy")) {
+                document.getElementById('apiKeyInput').value = savedKey;
                 document.getElementById('loginScreen').style.display = 'none';
                 document.getElementById('mainContent').style.display = 'flex';
-            } else {
-                errorMsg.innerText = "Sai mật khẩu! Vui lòng nhập lại.";
             }
         }
 
-        document.getElementById('passwordInput').addEventListener('keypress', function (e) {
+        document.getElementById('apiKeyInput').addEventListener('keypress', function (e) {
             if (e.key === 'Enter') {
-                checkPassword();
+                checkApiKey();
             }
         });
 
@@ -239,10 +265,10 @@
 
         async function sendToAIWithRetry(imageBase64, retriesLeft) {
             const resultDiv = document.getElementById('result');
-            const API_KEY = "AQ.Ab8RN6IqzkscZgnH9sxJtcDoUF65oiQ3oevoBTJ04ppwgeXc_A"; 
+            const API_KEY = localStorage.getItem('cuongdex_apikey'); 
 
             try {
-                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${API_KEY}`, {
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -286,7 +312,7 @@
             } catch (err) {
                 if (retriesLeft > 0) {
                     resultDiv.innerText = `🔄 Đang kết nối lại (${retriesLeft})...`;
-                    await new Promise(resolve => setTimeout(resolve, 1500));
+                    await new Number(resolve => setTimeout(resolve, 1500));
                     return sendToAIWithRetry(imageBase64, retriesLeft - 1);
                 }
                 resultDiv.innerText = "Lỗi kết nối: " + err.message;
